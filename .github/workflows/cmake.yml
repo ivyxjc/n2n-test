@@ -3,14 +3,27 @@ name: CMake
 
 # yamllint disable-line rule:truthy
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
 
 jobs:
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.assemble_artifact.outputs.release_tag }}
+    steps:
+      - name: Assemble Artifact
+        id: assemble_artifact
+        env:
+          TZ: Asia/Shanghai
+        run: |
+          time=$(date +%Y%m%d%H)
+          release_tag="$time-${GITHUB_REF#refs/heads/}"
+          echo "::set-output name=release_tag::$release_tag"
   build:
     # The CMake configure and build commands are platform agnostic and should
     # work equally well on Windows or Mac.  You can convert this to a matrix
@@ -18,12 +31,11 @@ jobs:
     # yamllint disable-line rule:line-length
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{ matrix.os }}
+    needs: create-release
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
           - os: windows-latest
-          - os: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -67,16 +79,28 @@ jobs:
         # detail
         run: ctest -C $BUILD_TYPE
 
-      - if: ${{ failure() }}
-        name: Upload test data
-        uses: actions/upload-artifact@v2
-        with:
-          name: tests-out
-          path: tests
+      - name: ls
+        shell: bash
+        run: |
+          ls -la build/Release
+          ls -la build/x64
+          ls -la build/win32
+          
 
-      - if: ${{ failure() }}
-        name: Upload cmake test output
-        uses: actions/upload-artifact@v2
+      - name: Upload Edge exe
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: tests-out
-          path: build/Testing
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build/Release/edge.exe
+          asset_name: edge.exe
+          overwrite: true
+          tag: ${{ needs.create-release.outputs.release_tag }}
+
+      - name: Upload Supernode exe
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build/Release/supernode.exe
+          asset_name: supernode.exe
+          overwrite: true
+          tag: ${{ needs.create-release.outputs.release_tag }}
