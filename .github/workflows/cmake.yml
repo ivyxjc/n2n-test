@@ -3,6 +3,7 @@ name: CMake
 
 # yamllint disable-line rule:truthy
 on:
+  workflow_dispatch:
   push:
   pull_request:
 
@@ -21,9 +22,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
           - os: windows-latest
-          - os: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -67,16 +66,6 @@ jobs:
         # detail
         run: ctest -C $BUILD_TYPE
 
-      - if: ${{ failure() }}
-        name: Upload test data
-        uses: actions/upload-artifact@v2
-        with:
-          name: tests-out
-          path: tests
-
-      - if: ${{ failure() }}
-        name: Upload cmake test output
-        uses: actions/upload-artifact@v2
-        with:
-          name: tests-out
-          path: build/Testing
+      - name: ls
+        shell: bash
+        run: ls -la build
