@@ -35,6 +35,7 @@ jobs:
     strategy:
       matrix:
         include:
+          - os: ubuntu-latest
           - os: windows-latest
 
     steps:
@@ -85,9 +86,10 @@ jobs:
           ls -la build/Release
           ls -la build/x64
           ls -la build/win32
-          
 
-      - name: Upload Edge exe
+
+      - name: Upload Windows Edge
+        if: matrix.os == 'windows-latest'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -96,11 +98,32 @@ jobs:
           overwrite: true
           tag: ${{ needs.create-release.outputs.release_tag }}
 
-      - name: Upload Supernode exe
+      - name: Upload Windows Supernode
+        if: matrix.os == 'windows-latest'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./build/Release/supernode.exe
           asset_name: supernode.exe
+          overwrite: true
+          tag: ${{ needs.create-release.outputs.release_tag }}
+
+      - name: Upload Linux Edge
+        if: matrix.os == 'ubuntu-latest'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build/Release/edge
+          asset_name: edge-linux
+          overwrite: true
+          tag: ${{ needs.create-release.outputs.release_tag }}
+
+      - name: Upload Linux Supernode
+        if: matrix.os == 'ubuntu-latest'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build/Release/supernode
+          asset_name: supernode-linux
           overwrite: true
           tag: ${{ needs.create-release.outputs.release_tag }}
