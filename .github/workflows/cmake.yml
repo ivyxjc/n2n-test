@@ -83,10 +83,7 @@ jobs:
       - name: ls
         shell: bash
         run: |
-          ls -la build/Release
-          ls -la build/x64
-          ls -la build/win32
-
+          ls -la build
 
       - name: Upload Windows Edge
         if: matrix.os == 'windows-latest'
